@@ -4,6 +4,7 @@ import '../utils/helpers';
 
 class AuthController {
     static async getConnect(request, response) {
+
         // get credentials from request
         // validate credentials
         // generate token and key

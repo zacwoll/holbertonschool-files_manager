@@ -1,7 +1,6 @@
-import { checkAuth, findUserById } from '../utils/helpers';
+import { checkAuth, findUserById, hashPassword } from '../utils/helpers';
 
 const Queue = require('bull');
-const crypto = require('crypto');
 const dbClient = require('../utils/db');
 
 class UsersController {
@@ -16,7 +15,7 @@ class UsersController {
     const usersWithEmail = await dbClient.users.find({ email }).toArray();
     if (usersWithEmail.length > 0) return response.status(400).json({ error: 'Already exists' });
     // Validated User, Hashing pwd
-    const hashedPassword = crypto.createHash('SHA1').update(password).digest('hex');
+    const hashedPassword = hashPassword(password);
 
     // Creating User and inserting into DB
     const result = await users.insertOne({ email, password: hashedPassword });
