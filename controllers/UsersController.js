@@ -1,4 +1,4 @@
-import { checkAuth, findUserById, hashPassword } from '../utils/helpers';
+import { findUserById, findUserIdByToken, hashPassword } from '../utils/helpers';
 
 const Queue = require('bull');
 const dbClient = require('../utils/db');
@@ -28,7 +28,7 @@ class UsersController {
   }
 
   static async getMe(request, response) {
-    const userId = await checkAuth(request);
+    const userId = await findUserIdByToken(request);
     if (!userId) return response.status(401).json({ error: 'Unauthorized' });
     const user = await findUserById(userId);
     if (!user) return response.status(401).json({ error: 'Unauthorized' });
