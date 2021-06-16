@@ -14,3 +14,7 @@ async function findUserById(userId) {
   const userExistsArray = await dbClient.users.find(`ObjectId("${userId}")`).toArray();
   return userExistsArray[0] || null;
 }
+
+export {
+  checkAuth, findUserById
+};

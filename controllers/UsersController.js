@@ -1,3 +1,5 @@
+import { checkAuth, findUserById } from '../utils/helpers';
+
 const Queue = require('bull');
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
@@ -24,6 +26,14 @@ class UsersController {
     userQueue.add({ userId: createdUser.id });
     response.statusCode = 201;
     return response.json(createdUser);
+  }
+
+  static async getMe(request, response) {
+    const userId = await checkAuth(request);
+    if (!userId) return response.status(401).json({ error: 'Unauthorized' });
+    const user = await findUserById(userId);
+    if (!user) return response.status(401).json({ error: 'Unauthorized' });
+    return response.json({ id: user._id, email: user.email });
   }
 }
 
