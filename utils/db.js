@@ -1,6 +1,5 @@
 import { MongoClient } from 'mongodb';
 
-// Database client object
 class DBClient {
   constructor() {
     this.host = process.env.DB_HOST || 'localhost';
@@ -10,7 +9,6 @@ class DBClient {
     this.connectToClient();
   }
 
-  // Set up connection and set data from DB
   async connectToClient() {
     MongoClient(`mongodb://${this.host}:${this.port}`, { useUnifiedTopology: true })
       .connect()
@@ -24,15 +22,12 @@ class DBClient {
       .catch(console.error);
   }
 
-  // returns connection stats of the db
   isAlive() { return this.connected; }
 
-  // Returns the # of users
   async nbUsers() { return this.users.countDocuments(); }
 
-  // Returns the # of files
   async nbFiles() { return this.files.countDocuments(); }
 }
 
 const dbClient = new DBClient();
-export default dbClient;
+module.exports = dbClient;
