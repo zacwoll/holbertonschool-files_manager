@@ -7,7 +7,7 @@ function hashPassword(password) {
 }
 
 async function getAuthToken(request) {
-  const token = request.header['x-token'];
+  const token = request.headers['x-token'];
   return `auth_${token}`;
 }
 
