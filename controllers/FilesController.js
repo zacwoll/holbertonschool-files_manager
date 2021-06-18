@@ -85,6 +85,17 @@ class FilesController {
             id: fileInserted.ops[0]._id, userId, name, type, isPublic, parentId,
         });
     }
+    static async getShow(request, response) {
+        // Retrieve the user based on the token
+        const userId = await findUserIdByToken(request);
+        if (!userId) return response.status(401).json({error: 'Unauthorized'});
+
+        // Find the document linked to the userID
+    }
+
+    static async getIndex() {
+
+    }
 }
 
 module.exports = FilesController;
