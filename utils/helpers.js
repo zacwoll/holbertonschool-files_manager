@@ -1,6 +1,7 @@
 import redisClient from './redis';
 import dbClient from './db';
 import crypto from 'crypto'
+import { ObjectId, ObjectID } from 'bson';
 
 function hashPassword(password) {
   return crypto.createHash('SHA1').update(password).digest('hex');
@@ -45,6 +46,61 @@ async function findUserByAuth(email, hashedPassword) {
   return userExistsArray.length === 0 ? null : userExistsArray[0];
 }
 
+async function findFile(request, response, files, userId) {
+  // Get the fileId from the request
+  const fileId = request.params.id;
+
+  // find file with or without userId
+  let fileArray;
+  if (userId !== 'null') {
+    fileArray = await files.find({ _id: ObjectID(fileId) }).toArray();
+  } else {
+    fileArray = await files.find(
+      { userId: ObjectID(userId), _id: ObjectID(fileId)}
+    ).toArray();
+  }
+  return fileArray.length > 0 ? fileArray[0] : null;
+}
+
+async function respondWithFile(response, file, userId) {
+  return response.json({
+    id: file._id,
+    userId,
+    name: file.name,
+    type: file.type,
+    isPublic: file.isPublic,
+    parentId: file.parentId,
+  });
+}
+
+async function findFilesByParentId(response, files, page, searchTerm, searchValue) {
+  let folders;
+  if (searchTerm === 'userId') {
+    folders = await files.aggregate([
+      { $match: { userId: ObjectID(searchValue) } },
+      { $skip: page * 20 },
+      { $limit: 20 },
+    ]).toArray();
+  } else if (searchTerm === 'parentId') {
+    folders = await files.aggregate([
+      { $match: { parentId: ObjectId(searchValue) } },
+      { $skip: page * 20 },
+      { $limit: 20 },
+    ]).toArray();
+  }
+  if (folders.length === 0) return response.json([]);
+  const data = folders.map((file) => ({
+    id: file._id,
+    userId: file.userId,
+    name: file.name,
+    type: file.type,
+    isPublic: file.isPublic,
+    parentId: file.parentId,
+  }));
+  return response.json(data);
+}
+
+
 export {
-  findUserIdByToken, findUserById, userAuthentication, hashPassword, findUserByAuth
+  findUserIdByToken, findUserById, userAuthentication, hashPassword, findUserByAuth, findFile, respondWithFile, findFilesByParentId
 };

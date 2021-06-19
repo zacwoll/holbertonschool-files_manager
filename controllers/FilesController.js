@@ -3,7 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import Queue from 'bull'
 import dbClient from '../utils/db';
-import { findUserIdByToken } from '../utils/helpers';
+import { findUserIdByToken, findFile, respondWithFile, findFilesByParentId } from '../utils/helpers';
+import { response } from 'express';
 
 class FilesController {
     static async postUpload(request, response) {
@@ -85,16 +86,33 @@ class FilesController {
             id: fileInserted.ops[0]._id, userId, name, type, isPublic, parentId,
         });
     }
+    // Return file by fileId
     static async getShow(request, response) {
         // Retrieve the user based on the token
         const userId = await findUserIdByToken(request);
         if (!userId) return response.status(401).json({error: 'Unauthorized'});
 
-        // Find the document linked to the userID
+        // Find the fileId linked to the userID
+        const file = await findFile(request, response, dbClient.files, userId);
+        if (!file) return response.status(404).json({ error: 'Not found' });
+        if (file.type === 'folder' && file.userId.toString() !== userId.toString()) {
+            return response.status(404).json({ error: 'Not found' });
+        }
+        // Respond with file
+        return respondWithFile(response, file, userId);
     }
 
-    static async getIndex() {
+    static async getIndex(request, response) {
+        // Retrieve the user based on the token
+        const userId = await findUserIdByToken(request);
+        if (!userId) return response.status(401).json({ error: 'Unauthorized' });
 
+        // Retrieve the files attached to the user
+        const { parentId = 0 } = request.query;
+        const searchTerm = parentId === 0 ? 'userId' : 'parentId';
+        const searchValue = parentId === 0 ? userId : parentId;
+        const { page = 0 } = request.query;
+        const data = findFilesByParentId(response, dbClient.files, page, searchTerm, searchValue);
     }
 }
 
