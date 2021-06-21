@@ -86,6 +86,7 @@ class FilesController {
             id: fileInserted.ops[0]._id, userId, name, type, isPublic, parentId,
         });
     }
+    // GET /files/:id
     // Return file by fileId
     static async getShow(request, response) {
         // Retrieve the user based on the token
@@ -102,6 +103,8 @@ class FilesController {
         return respondWithFile(response, file, userId);
     }
 
+    // GET /files
+    // Return the files attached to the user
     static async getIndex(request, response) {
         // Retrieve the user based on the token
         const userId = await findUserIdByToken(request);
@@ -113,6 +116,44 @@ class FilesController {
         const searchValue = parentId === 0 ? userId : parentId;
         const { page = 0 } = request.query;
         const data = findFilesByParentId(response, dbClient.files, page, searchTerm, searchValue);
+    }
+
+    // Put /files/:id/publish
+    // set isPublic to true on the file document
+    static async putPublish(request, response) {
+        // Retrieve the user based on the token
+        const userId = await findUserIdByToken(request);
+        if (!userId) return response.status(401).json({ error: 'Unauthorized' });
+
+        // Find the fileId linked to the userID
+        const file = await findFile(request, response, dbClient.files, userId);
+        if (!file) return response.status(404).json({ error: 'Not found' });
+        if (file.type === 'folder' && file.userId.toString() !== userId.toString()) {
+            return response.status(404).json({ error: 'Not found' });
+        }
+        respondWithFile(response, file, userId);
+    }
+
+    static async putUnpublish(request, response) {
+        // Retrieve the user based on the token
+        const userId = await findUserIdByToken(request);
+        if (!userId) return response.status(401).json({ error: 'Unauthorized' });
+
+        // Find the fileId linked to the userID
+        const file = await findFile(request, response, dbClient.files, userId);
+        if (!file) return response.status(404).json({ error: 'Not found' });
+        if (file.type === 'folder' && file.userId.toString() !== userId.toString()) {
+            return response.status(404).json({ error: 'Not found' });
+        }
+
+        // update the isPublic value
+        // dbClient.files.updateOne(
+        //  { userId: ObjectID(userId), _id: ObjectID(fileId) },
+        //  { $set: { isPublic } },
+        // );
+
+
+        respondWithFile(response, file, userId);
     }
 }
 
